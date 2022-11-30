@@ -26,7 +26,6 @@ jobs:
 
       - name: Publish solution
         run: |
-          dotnet restore ${{ env.SLNNAME }}
           ./set-version.sh
           ./publish.sh
         working-directory: ${{ env.SLNPATH }}
