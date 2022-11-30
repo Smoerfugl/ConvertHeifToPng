@@ -26,6 +26,7 @@ jobs:
 
       - name: Publish solution
         run: |
+          chmod +x *.sh
           ./set-version.sh
           ./publish.sh
         working-directory: ${{ env.SLNPATH }}
