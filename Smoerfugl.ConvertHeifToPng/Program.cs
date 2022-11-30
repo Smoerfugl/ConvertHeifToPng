@@ -1,6 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
-
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using ImageMagick;
 
 var path = Path.GetDirectoryName(args.FirstOrDefault());
@@ -18,10 +16,8 @@ files.AsParallel()
         var fileName = Path.GetFileNameWithoutExtension(file);
         var expectedFileName = path + fileName + ".png";
         var s = Stopwatch.StartNew();
-
         using var image = new MagickImage(file);
         image.Write(expectedFileName);
-
         s.Stop();
         Console.WriteLine($"- [x] {file} -> {expectedFileName} took {s.Elapsed}");
     });
