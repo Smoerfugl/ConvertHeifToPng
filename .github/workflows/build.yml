@@ -1,8 +1,8 @@
 name: build
 
 env:
-  SLNNAME: Smoerfugl.ConvertHeifToPng
-  SLNPATH: ./Smoerfugl.ConvertHeifToPng.sln
+  SLNNAME: Smoerfugl.ConvertHeifToPng.sln
+  SLNPATH: ./
 
 on:
   push:
