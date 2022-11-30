@@ -2,6 +2,13 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Smoerfugl.ConvertHeifToPng", "Smoerfugl.ConvertHeifToPng\Smoerfugl.ConvertHeifToPng.csproj", "{9588C43E-8F6A-4556-AAF7-5A2C654EF6A5}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{1F683030-FB31-4CFC-BF69-3ED2CEC4597F}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\Build.yml = .github\workflows\Build.yml
+		publish.sh = publish.sh
+		set-version.sh = set-version.sh
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
