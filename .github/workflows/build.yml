@@ -1,0 +1,32 @@
+name: build
+
+env:
+  SLNNAME: Smoerfugl.ConvertHeifToPng
+  SLNPATH: ./Smoerfugl.ConvertHeifToPng.sln
+
+on:
+  push:
+    paths:
+      - ".github/workflows/build.yml"
+      - "/**"
+         
+  publish:
+    runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/master'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: |
+            6.0.x
+            
+      - name: Publish
+        run: |
+          dotnet restore ${{ env.SLNNAME }}
+          ./set-version.sh
+          dotnet publish --no-restore ${{ env.SLNNAME }}
+        working-directory: ${{ env.SLNPATH }}
