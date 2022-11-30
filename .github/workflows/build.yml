@@ -24,7 +24,7 @@ on:
           dotnet-version: |
             6.0.x
 
-      - name: Publish
+      - name: Publish solution
         run: |
           dotnet restore ${{ env.SLNNAME }}
           ./set-version.sh
