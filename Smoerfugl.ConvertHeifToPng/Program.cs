@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using ImageMagick;
+using Spectre.Console;
 
 var path = Path.GetDirectoryName(args.FirstOrDefault());
 if (path == null)
@@ -14,18 +15,28 @@ var files = Directory.GetFiles(path)
     .ToList();
 Console.WriteLine($"Found {files.Count} files");
 
-files.AsParallel()
-    .ForAll(file =>
-    {
-        var fileName = Path.GetFileNameWithoutExtension(file);
-        var expectedFileName = path + Path.DirectorySeparatorChar + fileName + ".png";
-        var s = Stopwatch.StartNew();
-        using (var image = new MagickImage(file))
+AnsiConsole.Status()
+    .Start($"Converting {files.Count} files",
+        ctx =>
         {
-            Console.WriteLine($"- [x] Converting {image.FileName} to {expectedFileName}");
-            image.Write(expectedFileName);
-        }
+            ctx.Spinner(Spinner.Known.Star);
+            ctx.SpinnerStyle(Style.Parse("green"));
+            var numberOfFiles = files.Count;
+            files.AsParallel()
+                .WithDegreeOfParallelism(2)
+                .ForAll(file =>
+                {
+                    var fileName = Path.GetFileNameWithoutExtension(file);
+                    var expectedFileName = path + Path.DirectorySeparatorChar + fileName + ".png";
+                    var s = Stopwatch.StartNew();
+                    using (var image = new MagickImage(file))
+                    {
+                        image.Write(expectedFileName);
+                    }
 
-        s.Stop();
-        Console.WriteLine($"- [x] {file} -> {expectedFileName} took {s.Elapsed}");
-    });
+                    s.Stop();
+                    AnsiConsole.MarkupLine($"[green]{file} -> {expectedFileName} took {s.Elapsed}[/]");
+                    numberOfFiles--;
+                    ctx.Status($"Converting files {numberOfFiles} remaining");
+                });
+        });
