@@ -7,7 +7,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.github\workflows\Build.yml = .github\workflows\Build.yml
 		publish.sh = publish.sh
 		set-version.sh = set-version.sh
+		.github\workflows\nuke.yml = .github\workflows\nuke.yml
 	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "_build", "build\_build.csproj", "{25145DFA-8ECB-4A47-AE1B-7E6CE138616B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +18,8 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{25145DFA-8ECB-4A47-AE1B-7E6CE138616B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{25145DFA-8ECB-4A47-AE1B-7E6CE138616B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9588C43E-8F6A-4556-AAF7-5A2C654EF6A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9588C43E-8F6A-4556-AAF7-5A2C654EF6A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9588C43E-8F6A-4556-AAF7-5A2C654EF6A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
