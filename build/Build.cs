@@ -4,7 +4,7 @@ using Nuke.Common.CI.GitHubActions;
 using Nuke.Common.Git;
 using Nuke.Common.ProjectModel;
 using Nuke.Common.Tools.DotNet;
-using Nuke.Common.Tools.GitVersion;
+using Nuke.Common.Tools.NerdbankGitVersioning;
 using Serilog;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 
@@ -33,13 +33,7 @@ class Build : NukeBuild
 
     [GitRepository] readonly GitRepository GitRepository;
     [Solution] readonly Solution Solution;
-    [GitVersion(Framework = "net6.0")] readonly GitVersion GitVersion;
-
-    Target GetVersion => _ => _
-        .Executes(() =>
-        {
-            Log.Information("GitVersion = {Value}", GitVersion.MajorMinorPatch);
-        });
+    [NerdbankGitVersioning] readonly NerdbankGitVersioning NerdbankVersioning;
 
     Target Clean => _ => _
         .Before(Restore)
@@ -66,19 +60,19 @@ class Build : NukeBuild
     Target Publish => _ => _
         .OnlyWhenStatic(() => GitRepository.Branch == "master")
         .DependsOn(Compile)
-        .DependsOn(GetGitVersion)
+        .DependsOn(GetSemVer)
         .Produces(publishFolder)
         .Executes(() =>
         {
             DotNetPublish(s =>
                 s.SetOutput(publishFolder)
-                    .SetAssemblyVersion(GitVersion.AssemblySemVer)
+                    .SetAssemblyVersion(NerdbankVersioning.AssemblyVersion)
             );
         });
 
-    Target GetGitVersion => _ => _
+    Target GetSemVer => _ => _
         .Executes(() =>
         {
-            Log.Information("GitVersion = {Value}", GitVersion.MajorMinorPatch);
+            Log.Information("GitVersion = {Value}", NerdbankVersioning.MajorMinorVersion);
         });
 }
