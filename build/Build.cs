@@ -1,12 +1,18 @@
-using System.Runtime.CompilerServices;
+using System.IO;
+using System.IO.Compression;
+using System.Threading.Tasks;
 using Nuke.Common;
 using Nuke.Common.CI.GitHubActions;
 using Nuke.Common.Git;
 using Nuke.Common.ProjectModel;
 using Nuke.Common.Tools.DotNet;
+using Nuke.Common.Tools.GitHub;
 using Nuke.Common.Tools.NerdbankGitVersioning;
+using Octokit;
+using Octokit.Internal;
 using Serilog;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
+
 
 [GitHubActions(
     "build",
@@ -26,10 +32,10 @@ class Build : NukeBuild
     ///   - Microsoft VSCode           https://nuke.build/vscode
     public static int Main() => Execute<Build>(x => x.Publish);
 
-    [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
+    [Nuke.Common.Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
     readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
-    readonly GitHubActions GithubActions = GitHubActions.Instance;
+    readonly GitHubActions GitHubActions = GitHubActions.Instance;
 
     [GitRepository] readonly GitRepository GitRepository;
     [Solution] readonly Solution Solution;
@@ -58,7 +64,6 @@ class Build : NukeBuild
     public static readonly string publishFolder = RootDirectory / "publish";
 
     Target Publish => _ => _
-        .OnlyWhenStatic(() => GitRepository.Branch == "master")
         .DependsOn(Compile)
         .DependsOn(GetSemVer)
         .Produces(publishFolder)
@@ -70,9 +75,60 @@ class Build : NukeBuild
             );
         });
 
+    Target Release => _ => _
+        .OnlyWhenStatic(() => GitRepository.Branch == "master")
+        .After(Publish)
+        .Executes(async () =>
+        {
+            var credentials = new Credentials(GitHubActions.Token);
+            GitHubTasks.GitHubClient = new GitHubClient(new ProductHeaderValue(nameof(NukeBuild)),
+                new InMemoryCredentialStore(credentials));
+            var (owner, name) = (GitRepository.GetGitHubOwner(), GitRepository.GetGitHubName());
+
+            var releaseTag = NerdbankVersioning.AssemblyVersion;
+
+            var newRelease = new NewRelease(releaseTag)
+            {
+                TargetCommitish = NerdbankVersioning.GitCommitIdShort,
+                Draft = true,
+                Name = $"v{releaseTag}",
+                Prerelease = !string.IsNullOrEmpty(NerdbankVersioning.PrereleaseVersion),
+                Body = ""
+            };
+
+            var createdRelease = await GitHubTasks
+                .GitHubClient
+                .Repository
+                .Release.Create(owner, name, newRelease);
+
+            var zipPath = RootDirectory / $"{NerdbankVersioning.AssemblyVersion}.zip";
+            ZipFile.CreateFromDirectory(publishFolder, zipPath);
+
+            await UploadReleaseAssetToGithub(createdRelease, zipPath);
+            
+            await GitHubTasks
+                .GitHubClient
+                .Repository
+                .Release
+                .Edit(owner, name, createdRelease.Id, new ReleaseUpdate { Draft = false });
+        });
+
     Target GetSemVer => _ => _
         .Executes(() =>
         {
             Log.Information("GitVersion = {Value}", NerdbankVersioning.MajorMinorVersion);
         });
+
+    static async Task UploadReleaseAssetToGithub(Release release, string asset)
+    {
+        await using var artifactStream = File.OpenRead(asset);
+        var fileName = Path.GetFileName(asset);
+        var assetUpload = new ReleaseAssetUpload
+        {
+            FileName = fileName,
+            ContentType = "application/zip",
+            RawData = artifactStream,
+        };
+        await GitHubTasks.GitHubClient.Repository.Release.UploadAsset(release, assetUpload);
+    }
 }
