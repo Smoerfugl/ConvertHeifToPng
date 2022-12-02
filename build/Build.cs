@@ -28,9 +28,9 @@ class Build : NukeBuild
     readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
     readonly GitHubActions GithubActions = GitHubActions.Instance;
+
     [GitVersion] readonly GitVersion GitVersion;
     [GitRepository] readonly GitRepository GitRepository;
-
     [Solution] readonly Solution Solution;
 
     Target GetVersion => _ => _
@@ -64,6 +64,7 @@ class Build : NukeBuild
     Target Publish => _ => _
         .OnlyWhenStatic(() => GitRepository.Branch == "master")
         .DependsOn(Compile)
+        .DependsOn(GetGitVersion)
         .Produces(publishFolder)
         .Executes(() =>
         {
@@ -71,5 +72,11 @@ class Build : NukeBuild
                 s.SetOutput(publishFolder)
                     .SetAssemblyVersion(GitVersion.AssemblySemVer)
             );
+        });
+
+    Target GetGitVersion => _ => _
+        .Executes(() =>
+        {
+            Log.Information("GitVersion = {Value}", GitVersion.MajorMinorPatch);
         });
 }
