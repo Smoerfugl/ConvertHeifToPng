@@ -67,6 +67,7 @@ class Build : NukeBuild
         .DependsOn(Compile)
         .DependsOn(GetSemVer)
         .Produces(publishFolder)
+        .Triggers(Release)
         .Executes(() =>
         {
             DotNetPublish(s =>
