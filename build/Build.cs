@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Nuke.Common;
 using Nuke.Common.CI.GitHubActions;
 using Nuke.Common.Git;
@@ -29,9 +30,9 @@ class Build : NukeBuild
 
     readonly GitHubActions GithubActions = GitHubActions.Instance;
 
-    [GitVersion] readonly GitVersion GitVersion;
     [GitRepository] readonly GitRepository GitRepository;
     [Solution] readonly Solution Solution;
+    [GitVersion(Framework = "net6.0")] readonly GitVersion GitVersion;
 
     Target GetVersion => _ => _
         .Executes(() =>
