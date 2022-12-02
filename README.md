@@ -1,9 +1,10 @@
-How to use
+## How to use
 
 Download release 
 
 Unzip folder
 
-```bash
+### Windows
+```ps
 Smoerfugl.ConvertHeifToPng C:\tmp\
 ```
