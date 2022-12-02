@@ -55,7 +55,7 @@ class Build : NukeBuild
         .DependsOn(Restore)
         .Executes(() =>
         {
-            DotNetBuild(s => s.SetAssemblyVersion(GitVersion.AssemblySemVer));
+            DotNetBuild();
         });
 
 
