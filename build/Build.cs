@@ -7,6 +7,7 @@ using Nuke.Common.Git;
 using Nuke.Common.ProjectModel;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitHub;
+using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Tools.NerdbankGitVersioning;
 using Octokit;
 using Octokit.Internal;
@@ -39,7 +40,7 @@ class Build : NukeBuild
 
     [GitRepository] readonly GitRepository GitRepository;
     [Solution] readonly Solution Solution;
-    [NerdbankGitVersioning] readonly NerdbankGitVersioning NerdbankVersioning;
+    [GitVersion] readonly GitVersion GitVersion;
 
     Target Clean => _ => _
         .Before(Restore)
@@ -72,7 +73,7 @@ class Build : NukeBuild
         {
             DotNetPublish(s =>
                 s.SetOutput(publishFolder)
-                    .SetAssemblyVersion(NerdbankVersioning.AssemblyVersion)
+                    .SetAssemblyVersion(GitVersion.AssemblySemVer)
             );
         });
 
@@ -86,14 +87,14 @@ class Build : NukeBuild
                 new InMemoryCredentialStore(credentials));
             var (owner, name) = (GitRepository.GetGitHubOwner(), GitRepository.GetGitHubName());
 
-            var releaseTag = NerdbankVersioning.AssemblyVersion;
+            var releaseTag = GitVersion.AssemblySemVer;
 
             var newRelease = new NewRelease(releaseTag)
             {
-                TargetCommitish = NerdbankVersioning.GitCommitIdShort,
+                TargetCommitish = GitVersion.ShortSha,
                 Draft = true,
                 Name = $"v{releaseTag}",
-                Prerelease = !string.IsNullOrEmpty(NerdbankVersioning.PrereleaseVersion),
+                Prerelease = !string.IsNullOrEmpty(GitVersion.PreReleaseTag),
                 Body = ""
             };
 
@@ -102,7 +103,7 @@ class Build : NukeBuild
                 .Repository
                 .Release.Create(owner, name, newRelease);
 
-            var zipPath = RootDirectory / $"{NerdbankVersioning.AssemblyVersion}.zip";
+            var zipPath = RootDirectory / $"{GitVersion.AssemblySemVer}.zip";
             ZipFile.CreateFromDirectory(publishFolder, zipPath);
 
             await UploadReleaseAssetToGithub(createdRelease, zipPath);
@@ -117,7 +118,7 @@ class Build : NukeBuild
     Target GetSemVer => _ => _
         .Executes(() =>
         {
-            Log.Information("GitVersion = {Value}", NerdbankVersioning.MajorMinorVersion);
+            Log.Information("GitVersion = {Value}", GitVersion.AssemblySemVer);
         });
 
     static async Task UploadReleaseAssetToGithub(Release release, string asset)

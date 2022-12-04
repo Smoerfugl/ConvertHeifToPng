@@ -76,6 +76,7 @@
               "Compile",
               "GetSemVer",
               "Publish",
+              "Release",
               "Restore"
             ]
           }
@@ -94,6 +95,7 @@
               "Compile",
               "GetSemVer",
               "Publish",
+              "Release",
               "Restore"
             ]
           }
