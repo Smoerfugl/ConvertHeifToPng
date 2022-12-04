@@ -91,7 +91,7 @@ class Build : NukeBuild
 
             var newRelease = new NewRelease(releaseTag)
             {
-                TargetCommitish = GitRepository.Branch,
+                TargetCommitish = GitRepository.Commit,
                 Draft = true,
                 Name = $"v{releaseTag}",
                 Prerelease = !string.IsNullOrEmpty(GitVersion.PreReleaseTag),
