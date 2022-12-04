@@ -5,8 +5,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{1F683030-FB31-4CFC-BF69-3ED2CEC4597F}"
 	ProjectSection(SolutionItems) = preProject
 		.github\workflows\Build.yml = .github\workflows\Build.yml
-		publish.sh = publish.sh
-		set-version.sh = set-version.sh
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "_build", "build\_build.csproj", "{25145DFA-8ECB-4A47-AE1B-7E6CE138616B}"
