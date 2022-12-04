@@ -94,7 +94,7 @@ class Build : NukeBuild
                 TargetCommitish = GitRepository.Branch,
                 Draft = true,
                 Name = $"v{releaseTag}",
-                Prerelease = !string.IsNullOrEmpty(GitRepository.Branch),
+                Prerelease = !string.IsNullOrEmpty(GitVersion.PreReleaseTag),
                 Body = ""
             };
 
