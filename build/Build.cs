@@ -94,7 +94,7 @@ class Build : NukeBuild
                 TargetCommitish = GitVersion.ShortSha,
                 Draft = true,
                 Name = $"v{releaseTag}",
-                Prerelease = !string.IsNullOrEmpty(GitVersion.PreReleaseTag),
+                Prerelease = !string.IsNullOrEmpty(GitRepository.Commit),
                 Body = ""
             };
 
@@ -107,7 +107,7 @@ class Build : NukeBuild
             ZipFile.CreateFromDirectory(publishFolder, zipPath);
 
             await UploadReleaseAssetToGithub(createdRelease, zipPath);
-            
+
             await GitHubTasks
                 .GitHubClient
                 .Repository
@@ -119,6 +119,12 @@ class Build : NukeBuild
         .Executes(() =>
         {
             Log.Information("GitVersion = {Value}", GitVersion.AssemblySemVer);
+        });
+
+    Target GetGitCommit => _ => _
+        .Executes(() =>
+        {
+            Log.Information("GitCommit = {Value}", GitRepository.Commit);
         });
 
     static async Task UploadReleaseAssetToGithub(Release release, string asset)

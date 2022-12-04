@@ -74,6 +74,7 @@
             "enum": [
               "Clean",
               "Compile",
+              "GetGitCommit",
               "GetSemVer",
               "Publish",
               "Release",
@@ -93,6 +94,7 @@
             "enum": [
               "Clean",
               "Compile",
+              "GetGitCommit",
               "GetSemVer",
               "Publish",
               "Release",
