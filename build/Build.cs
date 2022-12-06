@@ -1,6 +1,7 @@
 using System.IO;
 using System.IO.Compression;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Nuke.Common;
 using Nuke.Common.CI.GitHubActions;
 using Nuke.Common.Git;
@@ -22,6 +23,15 @@ using static Nuke.Common.Tools.DotNet.DotNetTasks;
     On = new[] { GitHubActionsTrigger.Push },
     InvokedTargets = new[] { nameof(Publish) },
     PublishArtifacts = true,
+    EnableGitHubToken = true
+)]
+[GitHubActions(
+    "PullRequest",
+    GitHubActionsImage.UbuntuLatest,
+    FetchDepth = 0,
+    On = new[] { GitHubActionsTrigger.PullRequest },
+    OnWorkflowDispatchOptionalInputs = new string[] { },
+    InvokedTargets = new[] { nameof(NotifyRelease) }, PublishArtifacts = true,
     EnableGitHubToken = true
 )]
 class Build : NukeBuild
@@ -78,7 +88,7 @@ class Build : NukeBuild
         });
 
     Target Release => _ => _
-        .OnlyWhenStatic(() => GitRepository.Branch == "master")
+        .OnlyWhenStatic(() => GitRepository.Branch == "master" && IsServerBuild)
         .After(Publish)
         .Executes(async () =>
         {
@@ -126,6 +136,16 @@ class Build : NukeBuild
         {
             Log.Information("GitCommit = {Value}", GitRepository.Commit);
         });
+
+    Target NotifyRelease => _ => _
+        .OnlyWhenStatic(() => GitHubActions.IsPullRequest && IsServerBuild)
+        .Executes(
+            () =>
+            {
+                    Log.Information("GithubEvent = {Value}", JsonConvert.SerializeObject(GitHubActions));
+);
+            }
+        );
 
     static async Task UploadReleaseAssetToGithub(Release release, string asset)
     {

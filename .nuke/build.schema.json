@@ -76,6 +76,7 @@
               "Compile",
               "GetGitCommit",
               "GetSemVer",
+              "NotifyRelease",
               "Publish",
               "Release",
               "Restore"
@@ -96,6 +97,7 @@
               "Compile",
               "GetGitCommit",
               "GetSemVer",
+              "NotifyRelease",
               "Publish",
               "Release",
               "Restore"
