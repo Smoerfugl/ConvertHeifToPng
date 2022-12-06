@@ -143,7 +143,6 @@ class Build : NukeBuild
             () =>
             {
                     Log.Information("GithubEvent = {Value}", JsonConvert.SerializeObject(GitHubActions));
-);
             }
         );
 
