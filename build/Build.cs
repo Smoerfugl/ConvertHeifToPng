@@ -9,6 +9,7 @@ using Nuke.Common.ProjectModel;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitHub;
 using Nuke.Common.Tools.NerdbankGitVersioning;
+using Nuke.Common.Tools.GitVersion;
 using Octokit;
 using Octokit.Internal;
 using Serilog;
@@ -43,6 +44,7 @@ class Build : NukeBuild
 
     [GitRepository] readonly GitRepository GitRepository;
     [Solution] readonly Solution Solution;
+    [GitVersion] readonly GitVersion GitVersion;
 
     Target Clean => _ => _
         .Before(Restore)
@@ -83,13 +85,13 @@ class Build : NukeBuild
             GitHubTasks.GitHubClient = new GitHubClient(new ProductHeaderValue(nameof(NukeBuild)), new InMemoryCredentialStore(credentials));
             var (owner, name) = (GitRepository.GetGitHubOwner(), GitRepository.GetGitHubName());
 
-            var releaseTag = GitRepository.Commit?.Substring(0, 7) ?? "n/a";
+            var releaseTag = $"v{GitVersion.AssemblySemVer}";
 
             var newRelease = new NewRelease(releaseTag)
             {
                 TargetCommitish = GitRepository.Commit,
                 Draft = true,
-                Name = $"v{releaseTag}",
+                Name = releaseTag,
                 Prerelease = false,
                 Body = ""
             };
