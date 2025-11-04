@@ -8,13 +8,11 @@ using Nuke.Common.Git;
 using Nuke.Common.ProjectModel;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitHub;
-using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Tools.NerdbankGitVersioning;
 using Octokit;
 using Octokit.Internal;
 using Serilog;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
-
 
 [GitHubActions(
     "build",
@@ -36,11 +34,6 @@ using static Nuke.Common.Tools.DotNet.DotNetTasks;
 )]
 class Build : NukeBuild
 {
-    /// Support plugins are available for:
-    ///   - JetBrains ReSharper        https://nuke.build/resharper
-    ///   - JetBrains Rider            https://nuke.build/rider
-    ///   - Microsoft VisualStudio     https://nuke.build/visualstudio
-    ///   - Microsoft VSCode           https://nuke.build/vscode
     public static int Main() => Execute<Build>(x => x.Publish);
 
     [Nuke.Common.Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
@@ -50,27 +43,17 @@ class Build : NukeBuild
 
     [GitRepository] readonly GitRepository GitRepository;
     [Solution] readonly Solution Solution;
-    [GitVersion] readonly GitVersion GitVersion;
 
     Target Clean => _ => _
         .Before(Restore)
-        .Executes(() =>
-        {
-        });
+        .Executes(() => { });
 
     Target Restore => _ => _
-        .Executes(() =>
-        {
-            DotNetRestore();
-        });
+        .Executes(() => { DotNetRestore(); });
 
     Target Compile => _ => _
         .DependsOn(Restore)
-        .Executes(() =>
-        {
-            DotNetBuild();
-        });
-
+        .Executes(() => { DotNetBuild(); });
 
     public static readonly string publishFolder = RootDirectory / "publish";
 
@@ -81,10 +64,7 @@ class Build : NukeBuild
         .Triggers(Release)
         .Executes(() =>
         {
-            DotNetPublish(s =>
-                s.SetOutput(publishFolder)
-                    .SetAssemblyVersion(GitVersion.AssemblySemVer)
-            );
+            DotNetPublish(s => s.SetOutput(publishFolder));
         });
 
     Target Release => _ => _
@@ -93,58 +73,39 @@ class Build : NukeBuild
         .Executes(async () =>
         {
             var credentials = new Credentials(GitHubActions.Token);
-            GitHubTasks.GitHubClient = new GitHubClient(new ProductHeaderValue(nameof(NukeBuild)),
-                new InMemoryCredentialStore(credentials));
+            GitHubTasks.GitHubClient = new GitHubClient(new ProductHeaderValue(nameof(NukeBuild)), new InMemoryCredentialStore(credentials));
             var (owner, name) = (GitRepository.GetGitHubOwner(), GitRepository.GetGitHubName());
 
-            var releaseTag = GitVersion.AssemblySemVer;
+            var releaseTag = GitRepository.Commit?.Substring(0, 7) ?? "n/a";
 
             var newRelease = new NewRelease(releaseTag)
             {
                 TargetCommitish = GitRepository.Commit,
                 Draft = true,
                 Name = $"v{releaseTag}",
-                Prerelease = !string.IsNullOrEmpty(GitVersion.PreReleaseTag),
+                Prerelease = false,
                 Body = ""
             };
 
-            var createdRelease = await GitHubTasks
-                .GitHubClient
-                .Repository
-                .Release.Create(owner, name, newRelease);
+            var createdRelease = await GitHubTasks.GitHubClient.Repository.Release.Create(owner, name, newRelease);
 
-            var zipPath = RootDirectory / $"{GitVersion.AssemblySemVer}.zip";
+            var zipPath = RootDirectory / $"{releaseTag}.zip";
             ZipFile.CreateFromDirectory(publishFolder, zipPath);
 
             await UploadReleaseAssetToGithub(createdRelease, zipPath);
 
-            await GitHubTasks
-                .GitHubClient
-                .Repository
-                .Release
-                .Edit(owner, name, createdRelease.Id, new ReleaseUpdate { Draft = false });
+            await GitHubTasks.GitHubClient.Repository.Release.Edit(owner, name, createdRelease.Id, new ReleaseUpdate { Draft = false });
         });
 
     Target GetSemVer => _ => _
-        .Executes(() =>
-        {
-            Log.Information("GitVersion = {Value}", GitVersion.AssemblySemVer);
-        });
+        .Executes(() => { Log.Information("GitCommit = {Value}", GitRepository.Commit); });
 
     Target GetGitCommit => _ => _
-        .Executes(() =>
-        {
-            Log.Information("GitCommit = {Value}", GitRepository.Commit);
-        });
+        .Executes(() => { Log.Information("GitCommit = {Value}", GitRepository.Commit); });
 
     Target NotifyRelease => _ => _
         .OnlyWhenStatic(() => GitHubActions.IsPullRequest && IsServerBuild)
-        .Executes(
-            () =>
-            {
-                    Log.Information("GithubEvent = {Value}", JsonConvert.SerializeObject(GitHubActions));
-            }
-        );
+        .Executes(() => { Log.Information("GithubEvent = {Value}", JsonConvert.SerializeObject(GitHubActions)); });
 
     static async Task UploadReleaseAssetToGithub(Release release, string asset)
     {
