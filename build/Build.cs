@@ -85,20 +85,20 @@ class Build : NukeBuild
             GitHubTasks.GitHubClient = new GitHubClient(new ProductHeaderValue(nameof(NukeBuild)), new InMemoryCredentialStore(credentials));
             var (owner, name) = (GitRepository.GetGitHubOwner(), GitRepository.GetGitHubName());
 
-            var releaseTag = $"v{GitVersion.AssemblySemVer}";
+            var semVerTag = $"v{GitVersion.AssemblySemVer}";
 
-            var newRelease = new NewRelease(releaseTag)
+            var newRelease = new NewRelease(semVerTag)
             {
                 TargetCommitish = GitRepository.Commit,
                 Draft = true,
-                Name = releaseTag,
+                Name = semVerTag,
                 Prerelease = false,
                 Body = ""
             };
 
             var createdRelease = await GitHubTasks.GitHubClient.Repository.Release.Create(owner, name, newRelease);
 
-            var zipPath = RootDirectory / $"{releaseTag}.zip";
+            var zipPath = RootDirectory / $"{semVerTag}.zip";
             ZipFile.CreateFromDirectory(publishFolder, zipPath);
 
             await UploadReleaseAssetToGithub(createdRelease, zipPath);
