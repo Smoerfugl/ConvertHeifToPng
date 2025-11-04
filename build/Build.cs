@@ -57,8 +57,15 @@ class Build : NukeBuild
 
     public static readonly string publishFolder = RootDirectory / "publish";
 
-    Target Publish => _ => _
+    Target Test => _ => _
         .DependsOn(Compile)
+        .Executes(() =>
+        {
+            DotNetTest(s => s.SetConfiguration(Configuration));
+        });
+
+    Target Publish => _ => _
+        .DependsOn(Test)
         .DependsOn(GetSemVer)
         .Produces(publishFolder)
         .Triggers(Release)
