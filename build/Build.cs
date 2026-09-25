@@ -30,11 +30,13 @@ using static Nuke.Common.Tools.DotNet.DotNetTasks;
     FetchDepth = 0,
     On = new[] { GitHubActionsTrigger.PullRequest },
     OnWorkflowDispatchOptionalInputs = new string[] { },
-    InvokedTargets = new[] { nameof(NotifyRelease) }, PublishArtifacts = true,
+    InvokedTargets = new[] { nameof(Test) }, PublishArtifacts = true,
     EnableGitHubToken = true
 )]
 class Build : NukeBuild
 {
+    static readonly string[] RuntimeIdentifiers = { "win-x64", "linux-x64", "linux-arm64", "osx-x64", "osx-arm64" };
+
     public static int Main() => Execute<Build>(x => x.Publish);
 
     [Nuke.Common.Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
@@ -73,7 +75,15 @@ class Build : NukeBuild
         .Triggers(Release)
         .Executes(() =>
         {
-            DotNetPublish(s => s.SetOutput(publishFolder));
+            foreach (var runtime in RuntimeIdentifiers)
+            {
+                DotNetPublish(s => s
+                    .SetProject(RootDirectory / "Smoerfugl.ConvertHeifToPng" / "Smoerfugl.ConvertHeifToPng.csproj")
+                    .SetConfiguration(Configuration)
+                    .SetRuntime(runtime)
+                    .SetSelfContained(true)
+                    .SetOutput(Path.Combine(publishFolder, runtime)));
+            }
         });
 
     Target Release => _ => _
@@ -98,10 +108,12 @@ class Build : NukeBuild
 
             var createdRelease = await GitHubTasks.GitHubClient.Repository.Release.Create(owner, name, newRelease);
 
-            var zipPath = RootDirectory / $"{semVerTag}.zip";
-            ZipFile.CreateFromDirectory(publishFolder, zipPath);
-
-            await UploadReleaseAssetToGithub(createdRelease, zipPath);
+            foreach (var runtime in RuntimeIdentifiers)
+            {
+                var zipPath = RootDirectory / $"{semVerTag}-{runtime}.zip";
+                ZipFile.CreateFromDirectory(Path.Combine(publishFolder, runtime), zipPath);
+                await UploadReleaseAssetToGithub(createdRelease, zipPath);
+            }
 
             await GitHubTasks.GitHubClient.Repository.Release.Edit(owner, name, createdRelease.Id, new ReleaseUpdate { Draft = false });
         });

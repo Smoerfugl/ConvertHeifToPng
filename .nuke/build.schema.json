@@ -31,7 +31,8 @@
         "NotifyRelease",
         "Publish",
         "Release",
-        "Restore"
+        "Restore",
+        "Test"
       ]
     },
     "Verbosity": {
